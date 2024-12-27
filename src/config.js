@@ -1,3 +1,5 @@
+
+
 /* CONFIGURATION */
 const config = {
     type: Phaser.AUTO,
@@ -12,8 +14,8 @@ const config = {
         mode: Phaser.Scale.FIT, // Adjust game size to fit
         autoCenter: Phaser.Scale.CENTER_BOTH // Center game on the Screen
     },
-    scene: [ StartScene ] // ensures scene registration
+    scene: [ GameScene ] // ensures scene registration
 };
 
 // Initializes the Phaser Game with the Configurations
-const game = new Phaser.Game(config);
+let game = new Phaser.Game(config);
