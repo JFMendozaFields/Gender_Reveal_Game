@@ -8,7 +8,10 @@ const config = {
     backgroundColor: '#800080', // Purple Background
     physics: {
         default: 'arcade',
-        arcade: {}
+        arcade: {
+            gravity: { y: 0 },
+            debug: true
+        }
     },
     scale: {
         mode: Phaser.Scale.FIT, // Adjust game size to fit

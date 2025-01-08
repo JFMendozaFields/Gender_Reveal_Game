@@ -20,7 +20,8 @@ class GameScene extends Phaser.Scene {
         this.load.image('Enemy2', 'media/images/bobafet-ship.png');
         this.load.image('Aship', 'media/images/tiny-ship.png');
         this.load.image('star', 'media/images/tiny-star.png');
-        this.load.image('bullet', 'media/images/redbullet.png');
+        this.load.image('bullet', 'media/images/bullet.png');
+        this.load.image('enemyBullet', 'media/images/eBullet.png');
 
         //Preload Game Music
         //this.load.audio()
@@ -31,9 +32,11 @@ class GameScene extends Phaser.Scene {
 
     create() {
         //stop, assign and play new music
-        //gameState.currentMusic.stop();
-        //gameState.currentMusic = this.sound.add('gameMusic');
-        //gameState.currentMusic.play({ loop: true });
+        // if (gameState.currentMusic.stop) {
+        //    gameState.currentMusic.stop();
+        // }
+        // gameState.currentMusic = this.sound.add('gameMusic');
+        // gameState.currentMusic.play({ loop: true });
 
         //Assign SFX
 
@@ -48,15 +51,39 @@ class GameScene extends Phaser.Scene {
         // Setting up Camera Midpoint
         gameState.cam.midpoint = { x: width / 2, y: height / 2 };
 
-        //sets up sprites
-        gameState.player = this.add.sprite(gameState.cam.midpoint.x, 400, 'BShip').setScale(0.5);
+        //sets up player sprite
+        gameState.player = this.physics.add.sprite(gameState.cam.midpoint.x, 400, 'BShip').setScale(0.5);
+        gameState.player.setCollideWorldBounds(true);
 
+        // enemy sprites
+        gameState.enemies = this.physics.add.group();
+        
         //Cursor Keys Creation
-        gameState.cursors = this.input.keyboard.createCursorKeys();
+        gameState.cursors = {
+            up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+            down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
+            left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+            right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D)
+        }
         gameState.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        
 
-        //Create Bullets GROUP
-        gameState.projectiles = this.physics.add.group();
+        // Create initial enemies
+        this.spawnEnemies();
+
+
+        //Create projectiles and enemy projectiles GROUP
+        gameState.projectiles = this.physics.add.group({
+            defaultKey: 'bullet'
+        });
+
+    
+        //Colliders 
+        this.physics.add.collider(gameState.enemies, gameState.projectiles, function(enemy, projectile) {
+            enemy.destroy();
+            projectile.destroy();
+            gameState.score += 10;
+        });
     }
 
     update() {
@@ -74,21 +101,53 @@ class GameScene extends Phaser.Scene {
         }
 
         if (Phaser.Input.Keyboard.JustDown(gameState.spacebar)) {
-            this.launchProjectiles();
+            this.fireProjectile();
         }
     }
 
-    launchProjectiles() {
-        // Create two projectiles slightly in front of the player
-        const leftProjectile = this.physics.add.sprite(gameState.player.x - 10, gameState.player.y - 20, 'bullet').setScale(1.5);
-        const rightProjectile = this.physics.add.sprite(gameState.player.x + 10, gameState.player.y - 20, 'bullet').setScale(1.5);
+    //function to fire projectiles
+    fireProjectile() {
+        const leftBullet = gameState.projectiles.create(gameState.player.x - 10, gameState.player.y - 10, 'bullet').setScale(0.10);
+        const rightBullet = gameState.projectiles.create(gameState.player.x + 10, gameState.player.y - 10, 'bullet').setScale(0.10);
 
-        // Set velocity for both projectiles
-        leftProjectile.setVelocityY(-300);
-        rightProjectile.setVelocityY(-300);
+        leftBullet.setVelocityY(-400);
+        rightBullet.setVelocityY(-400);
+    }
 
-        // Add projectiles to the group
-        gameState.projectiles.add(leftProjectile);
-        gameState.projectiles.add(rightProjectile);
+    //function to spawn enemies
+    spawnEnemies() {
+        // set how many enemies to spawn in current wave
+        const numEnemies = Phaser.Math.Between(3, 5);
+
+        // Spawn Enemies
+        for (let i = 0; i < numEnemies; i++) {
+            const enemyType = Phaser.Math.Between(1, 2); // Randomly pick between 1 and 2
+            const enemyX = Phaser.Math.Between(50, this.game.config.width - 50); // Random X position
+            const enemyY = Phaser.Math.Between(-100, this.game.config.height / 3 - 50); // spawn position above screen
+        
+            let enemy;
+
+            if (enemyType === 1) {
+                enemy = gameState.enemies.create(enemyX, enemyY, 'Enemy1').setScale(0.5);
+            }
+            else {
+                enemy = gameState.enemies.create(enemyX, enemyY, 'Enemy2').setScale(0.5);
+            }
+            
+            // Sets random vertical speed for enemy
+            const randomVerticalSpeed = Phaser.Math.Between(50, 100);
+            enemy.setVelocityY(randomVerticalSpeed);
+            
+            // Sets random horizontal speed for enemy
+            const randomHorizontalSpeed = Phaser.Math.Between(-100, -50);
+            enemy.setVelocityX(randomHorizontalSpeed); 
+
+            // Ensures stays withing the top half of the screen
+            enemy.setBounce(1, 1); // makes enenmy bounce when hitting world bounds
+            enemy.setCollideWorldBounds(true); // ensures enemy collides with world bounds
+            // Increase the wave count
+            gameState.currentEnemyWave +=1;
+        }
     }
 }
+console.log(Phaser.VERSION)
